@@ -19,7 +19,8 @@ def test_dot_dirs_are_skipped(wiki):
     db = store.connect()
     counts = wiki.index.reindex(db)
     assert counts["indexed"] == 3          # still only the 3 real docs
-    assert not wiki.retrieve.search(db, "hidden vault config")
+    assert store.stats(db)["documents"] == 3
+    assert ".obsidian/notes.md" not in {d["path"] for d in store.list_documents(db)}
     db.close()
 
 
