@@ -13,8 +13,12 @@ from .config import TEXT_EXT
 
 def _iter_files(root: Path):
     for p in sorted(root.rglob("*")):
-        if p.is_file() and p.suffix.lower() in TEXT_EXT and not p.name.startswith("."):
-            yield p
+        if not p.is_file() or p.suffix.lower() not in TEXT_EXT:
+            continue
+        rel = p.relative_to(root)
+        if any(part.startswith(".") for part in rel.parts):
+            continue  # skip .obsidian/, .git/, .vscode/, dotfiles …
+        yield p
 
 
 def index_file(db: sqlite3.Connection, path: Path, corpus_root: Path | None = None,

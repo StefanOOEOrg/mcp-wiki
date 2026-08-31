@@ -13,6 +13,16 @@ def test_full_index_and_stats(wiki):
     db.close()
 
 
+def test_dot_dirs_are_skipped(wiki):
+    (wiki.root / "corpus" / ".obsidian").mkdir()
+    (wiki.root / "corpus" / ".obsidian" / "notes.md").write_text("# hidden\n\nsecret vault config")
+    db = store.connect()
+    counts = wiki.index.reindex(db)
+    assert counts["indexed"] == 3          # still only the 3 real docs
+    assert not wiki.retrieve.search(db, "hidden vault config")
+    db.close()
+
+
 def test_incremental_skip(wiki):
     db = store.connect()
     wiki.index.reindex(db)
