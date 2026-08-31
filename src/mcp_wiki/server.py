@@ -14,11 +14,13 @@ mcp = MCPServer(
     "mcp-wiki",
     version="0.1.0",
     instructions=(
-        "A local RAG knowledge base over a folder of markdown documents. Use "
-        "wiki_search / wiki_answer to retrieve, wiki_get to read a whole "
-        "document. Only call wiki_add / wiki_update / wiki_remove when the user "
-        "explicitly asks to store or change something. Paths are relative to the "
-        "corpus root."
+        "The user's personal knowledge base — their own notes, projects, setups, "
+        "preferences and numbers. For any question about the user's own domains, "
+        "search here (wiki_search / wiki_answer) BEFORE web search or memory; the "
+        "wiki is the authoritative source and web results are only a fallback. "
+        "wiki_get reads a whole document. Only call wiki_add / wiki_update / "
+        "wiki_remove when the user explicitly asks to store or change something. "
+        "Paths are relative to the corpus root."
     ),
 )
 
