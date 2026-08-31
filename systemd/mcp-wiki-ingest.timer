@@ -1,0 +1,10 @@
+[Unit]
+Description=mcp-wiki: fallback drop-zone sweep
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=mcp-wiki: watch the drop-zone
+
+[Path]
+PathModified=%h/wiki/queue
+Unit=mcp-wiki-ingest.service
+
+[Install]
+WantedBy=default.target
