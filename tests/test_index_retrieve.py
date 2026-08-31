@@ -88,6 +88,24 @@ def test_search_tag_filter(wiki):
     db.close()
 
 
+def test_long_doc_does_not_bury_short_exact_match(wiki):
+    """A short note whose one chunk names the term must outrank a huge
+    document that merely mentions it in passing among hundreds of chunks."""
+    big = wiki.root / "corpus" / "big.md"
+    body = "# Big reference\n\n" + "\n\n".join(
+        f"## Section {i}\n\nGeneric filler about logistics and dispatching item {i}."
+        for i in range(200)
+    ) + "\n\n## Aside\n\nSomeone once mentioned zeppelins here.\n"
+    big.write_text(body)
+    (wiki.root / "corpus" / "zeppelin.md").write_text(
+        "# Zeppelin\n\nA zeppelin is a rigid airship. Zeppelins fly using lifting gas.\n")
+    db = store.connect()
+    wiki.index.reindex(db)
+    hits = wiki.retrieve.search(db, "zeppelin airship lifting gas", k=5)
+    assert hits[0]["path"] == "zeppelin.md"
+    db.close()
+
+
 def test_answer_shape(wiki):
     db = store.connect()
     wiki.index.reindex(db)

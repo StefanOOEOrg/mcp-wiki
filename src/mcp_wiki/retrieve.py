@@ -1,14 +1,24 @@
-"""Hybrid retrieval: dense (sqlite-vec) + lexical (FTS5 BM25), merged with
-Reciprocal Rank Fusion, then grouped by document."""
+"""Hybrid retrieval: dense (sqlite-vec) + lexical (FTS5 BM25), merged per chunk
+with Reciprocal Rank Fusion, then grouped to documents.
+
+Document score = the best matching chunk's fused score, with a small bonus for
+having several independent hits. Using the *best* chunk (not a sum) keeps a long
+reference document from drowning a short, exactly-relevant note just because it
+has hundreds of chunks in the candidate pool.
+"""
 
 from __future__ import annotations
 
 import sqlite3
+from collections import defaultdict
 from typing import Any
 
 from . import llm, store
 
 RRF_K = 60
+POOL = 60
+MULTI_HIT_BONUS = 0.12          # per extra matched chunk, capped
+MULTI_HIT_CAP = 3
 
 
 def _rrf(*ranked_lists: list[int]) -> dict[int, float]:
@@ -20,7 +30,7 @@ def _rrf(*ranked_lists: list[int]) -> dict[int, float]:
 
 
 def search(db: sqlite3.Connection, query: str, *, k: int = 8,
-           pool: int = 40, section: str | None = None,
+           pool: int = POOL, section: str | None = None,
            tags: list[str] | None = None) -> list[dict[str, Any]]:
     qvec = llm.embed([query])[0]
     dense = [cid for cid, _ in store.search_dense(db, qvec, pool)]
@@ -30,8 +40,8 @@ def search(db: sqlite3.Connection, query: str, *, k: int = 8,
         return []
 
     rows = store.chunk_rows(db, list(fused))
-    per_doc: dict[str, dict[str, Any]] = {}
-    for cid, score in sorted(fused.items(), key=lambda kv: -kv[1]):
+    by_doc: dict[str, list[tuple[float, dict[str, Any]]]] = defaultdict(list)
+    for cid, score in fused.items():
         row = rows.get(cid)
         if not row:
             continue
@@ -39,20 +49,28 @@ def search(db: sqlite3.Connection, query: str, *, k: int = 8,
             continue
         if tags and not (set(tags) & set(row["tags"])):
             continue
-        doc = per_doc.setdefault(row["doc_path"], {
-            "path": row["doc_path"], "title": row["title"],
-            "section": row["section"], "tags": row["tags"],
-            "score": 0.0, "hits": [],
+        by_doc[row["doc_path"]].append((score, row))
+
+    results: list[dict[str, Any]] = []
+    for path, matches in by_doc.items():
+        matches.sort(key=lambda m: -m[0])
+        best = matches[0][0]
+        bonus = 1.0 + MULTI_HIT_BONUS * min(len(matches) - 1, MULTI_HIT_CAP)
+        row0 = matches[0][1]
+        results.append({
+            "path": path,
+            "title": row0["title"],
+            "section": row0["section"],
+            "tags": row0["tags"],
+            "score": round(best * bonus, 4),
+            "hits": [
+                {"kind": r["kind"], "heading_path": r["heading_path"],
+                 "snippet": _snippet(r["text"])}
+                for _, r in matches[:3]
+            ],
         })
-        doc["score"] += score
-        if len(doc["hits"]) < 3:
-            doc["hits"].append({
-                "kind": row["kind"],
-                "heading_path": row["heading_path"],
-                "snippet": _snippet(row["text"]),
-            })
-    ranked = sorted(per_doc.values(), key=lambda d: -d["score"])
-    return ranked[:k]
+    results.sort(key=lambda d: -d["score"])
+    return results[:k]
 
 
 def _snippet(text: str, limit: int = 320) -> str:
