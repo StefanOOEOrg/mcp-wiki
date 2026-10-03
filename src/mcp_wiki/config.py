@@ -34,7 +34,15 @@ def db_path() -> Path:
 
 
 def llm_base() -> str:
+    """Base URL for embeddings. Historically also served chat/vision via a
+    single litellm proxy that routed by model name; now that each model is
+    its own host:port, chat/vision default here too but can be split off via
+    MCP_WIKI_CHAT_BASE (see chat_base())."""
     return os.environ.get("MCP_WIKI_LLM_BASE", "http://127.0.0.1:4000/v1").rstrip("/")
+
+
+def chat_base() -> str:
+    return os.environ.get("MCP_WIKI_CHAT_BASE", llm_base()).rstrip("/")
 
 
 def llm_key() -> str:

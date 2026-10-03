@@ -1,5 +1,6 @@
-"""Thin OpenAI-compatible client for the local litellm proxy (embeddings, chat,
-vision). Standard library only."""
+"""Thin OpenAI-compatible client for embeddings, chat, and vision. Embeddings
+and chat/vision may live on different hosts (see config.llm_base() vs.
+config.chat_base()). Standard library only."""
 
 from __future__ import annotations
 
@@ -14,9 +15,9 @@ class LLMError(RuntimeError):
     pass
 
 
-def _post(path: str, payload: dict, timeout: float = 120.0) -> dict:
+def _post(path: str, payload: dict, *, base: str | None = None, timeout: float = 120.0) -> dict:
     req = urllib.request.Request(
-        config.llm_base() + path,
+        (base or config.llm_base()) + path,
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
@@ -50,7 +51,7 @@ def chat(messages: list[dict], *, model: str | None = None,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
-    }, timeout=300.0)
+    }, base=config.chat_base(), timeout=300.0)
     return data["choices"][0]["message"]["content"] or ""
 
 
