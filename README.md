@@ -33,8 +33,9 @@ $MCP_WIKI_DB (default ~/.local/state/mcp-wiki/wiki.db)   the derived index
 |---|---|
 | `MCP_WIKI_DIR` | `~/wiki` |
 | `MCP_WIKI_DB` | `~/.local/state/mcp-wiki/wiki.db` |
-| `MCP_WIKI_LLM_BASE` | `http://127.0.0.1:4000/v1` |
-| `MCP_WIKI_LLM_KEY` | *(required)* |
+| `MCP_WIKI_LLM_BASE` | `http://127.0.0.1:4000/v1` (embeddings endpoint) |
+| `MCP_WIKI_CHAT_BASE` | = `MCP_WIKI_LLM_BASE` (chat/vision endpoint, if different) |
+| `MCP_WIKI_LLM_KEY` | *(empty — optional; no Authorization header is sent when unset)* |
 | `MCP_WIKI_EMBED_MODEL` | `embed-local` |
 | `MCP_WIKI_CHAT_MODEL` / `MCP_WIKI_VISION_MODEL` | `qwen-local` |
 | `MCP_WIKI_CAPTIONS` | `1` (set `0` to skip image captioning) |
@@ -52,7 +53,7 @@ mcp-wiki                             # no args → MCP server on stdio
 ### MCP client config
 
 ```json
-{ "mcpServers": { "wiki": { "command": "mcp-wiki", "env": { "MCP_WIKI_LLM_KEY": "sk-..." } } } }
+{ "mcpServers": { "wiki": { "command": "mcp-wiki", "env": { "MCP_WIKI_LLM_BASE": "http://host:8001/v1" } } } }
 ```
 
 ### Tools

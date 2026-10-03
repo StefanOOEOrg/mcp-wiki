@@ -1,10 +1,10 @@
 # systemd (user) units
 
-Auto-ingest whatever lands in `~/wiki/queue/`.
+Auto-ingest whatever lands in `$MCP_WIKI_DIR/queue/` (here `/srv/wiki/queue/`).
 
 ```bash
 cp mcp-wiki.env.example ~/.config/mcp-wiki.env && chmod 600 ~/.config/mcp-wiki.env
-# fill in MCP_WIKI_LLM_KEY
+# adjust endpoints/paths if needed
 
 cp mcp-wiki-ingest.{service,path,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload

@@ -1,9 +1,9 @@
 [Unit]
 Description=mcp-wiki: ingest the drop-zone into the corpus and index it
-After=network-online.target litellm-proxy.service
+After=network-online.target
 
 [Service]
 Type=oneshot
 EnvironmentFile=%h/.config/mcp-wiki.env
-ExecStart=%h/src/mcp-wiki/.venv/bin/python -m mcp_wiki ingest-queue
+ExecStart=/opt/hermes-apps/mcp-wiki/current/.venv/bin/python -m mcp_wiki ingest-queue
 Nice=10

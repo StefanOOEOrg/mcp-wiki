@@ -16,13 +16,13 @@ class LLMError(RuntimeError):
 
 
 def _post(path: str, payload: dict, *, base: str | None = None, timeout: float = 120.0) -> dict:
+    headers = {"Content-Type": "application/json"}
+    if config.llm_key():  # optional: the local endpoints run without an API key
+        headers["Authorization"] = f"Bearer {config.llm_key()}"
     req = urllib.request.Request(
         (base or config.llm_base()) + path,
         data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {config.llm_key()}",
-        },
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
